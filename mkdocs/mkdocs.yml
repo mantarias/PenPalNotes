@@ -1,0 +1,10 @@
+site_name: PenPalNotes
+# site_url: "https://penpalnotes.mantarias.com"
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+
+markdown_extensions:
+  - admonition
