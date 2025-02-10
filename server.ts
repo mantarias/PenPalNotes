@@ -14,22 +14,20 @@ class OpenFile {
     this.list = this.doc.getList("list");
   }
   notifyUsers(): void {
-    this.users.forEach(element => {
-        element.socket.send(JSON.stringify(this.doc));
-        for (let index = 0; index <= this.doc.toJSON().list.length; index++) {
-            if (this.doc.toJSON().list[index] == this.old[index]) {
-                continue;
-            }
-            else {
-                Deno.writeTextFile(
-                    "./mkdocs/docs/"+this.file,this.doc.toJSON().list[index])
-                this.old = this.doc.toJSON().list;
-                break;
-            }
-
-
+    this.users.forEach((element) => {
+      element.socket.send(JSON.stringify(this.doc));
+      for (let index = 0; index <= this.doc.toJSON().list.length; index++) {
+        if (this.doc.toJSON().list[index] == this.old[index]) {
+          continue;
+        } else {
+          Deno.writeTextFile(
+            "./mkdocs/docs/" + this.file,
+            this.doc.toJSON().list.join(""),
+          );
+          this.old = this.doc.toJSON().list;
+          break;
         }
-         
+      }
     });
   }
 }
@@ -49,7 +47,11 @@ class User {
     this.socket.onopen = async () => {
       console.log("WebSocket connection opened");
       const data = await Deno.readTextFile("./mkdocs/docs/" + this.file);
-      this.list.insert(0, data);
+      for (let index = 0; index < data.length; index++) {
+        this.list.insert(index, data[index]);
+        
+      }
+      
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
         openFiles.get(this.file)?.doc.import(update);
@@ -61,10 +63,27 @@ class User {
     };
     this.socket.onmessage = (event) => {
       let data = JSON.parse(event.data);
-      this.list.insert(0, data);
-      this.doc.export({ mode: "shallow-snapshot",
-        frontiers: this.doc.frontiers()});
-
+      console.log(this.list.toJSON())
+      data.forEach((element) => {
+        if(element.method == "insert")
+        {
+          for (let index = 0; index < element.input.length; index++) {
+            console.log("commiting" + index)
+            this.list.insert(element.at + index, element.input[index]);
+            this.doc.commit();
+          }
+        }
+        else if(element.method == "deleted")
+        {
+          this.list.delete(element.at, 1)
+          this.doc.commit();
+        }
+      });
+      console.log(this.list.toJSON())
+      this.doc.export({
+        mode: "shallow-snapshot",
+        frontiers: this.doc.frontiers(),
+      });
     };
     this.socket.onclose = () => {
       console.log("WebSocket connection closed");
