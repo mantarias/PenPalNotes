@@ -7,6 +7,7 @@ class OpenFile {
   doc;
   users: User[] = [];
   old = [];
+  timeout;
   constructor(file: string, user: User) {
     this.file = file;
     this.doc = new LoroDoc();
@@ -14,21 +15,21 @@ class OpenFile {
     this.list = this.doc.getList("list");
   }
   notifyUsers(): void {
+    let update = this.doc.export({ mode: "update" });
     this.users.forEach((element) => {
       element.socket.send(JSON.stringify(this.doc));
-      for (let index = 0; index <= this.doc.toJSON().list.length; index++) {
-        if (this.doc.toJSON().list[index] == this.old[index]) {
-          continue;
-        } else {
-          Deno.writeTextFile(
-            "./mkdocs/docs/" + this.file,
-            this.doc.toJSON().list.join(""),
-          );
-          this.old = this.doc.toJSON().list;
-          break;
-        }
-      }
+      element.doc.import(update);
+      clearInterval(this.timeout)
+      this.timeout = setTimeout(() => {
+        this.updateFile();
+      },1000);
     });
+  }
+  updateFile() {
+    Deno.writeTextFile(
+      "./mkdocs/docs/" + this.file,
+      this.doc.toJSON().list.join(""),
+    );
   }
 }
 class User {
@@ -49,9 +50,8 @@ class User {
       const data = await Deno.readTextFile("./mkdocs/docs/" + this.file);
       for (let index = 0; index < data.length; index++) {
         this.list.insert(index, data[index]);
-        
       }
-      
+
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
         openFiles.get(this.file)?.doc.import(update);
@@ -63,23 +63,78 @@ class User {
     };
     this.socket.onmessage = (event) => {
       let data = JSON.parse(event.data);
-      console.log(this.list.toJSON())
-      data.forEach((element) => {
-        if(element.method == "insert")
-        {
-          for (let index = 0; index < element.input.length; index++) {
-            console.log("commiting" + index)
-            this.list.insert(element.at + index, element.input[index]);
-            this.doc.commit();
+      console.log(this.list.toJSON());
+      console.log("dp o ever get here");
+      if (data.method == "deleted") {
+        for (let index = data.from.length; index >= 0; index--) {
+          if (data.from[index] != data.to[index]) {
+            this.list.delete(index, 1);
           }
         }
-        else if(element.method == "deleted")
-        {
-          this.list.delete(element.at, 1)
-          this.doc.commit();
+      } else if (data.method == "insert") {
+        let changes = [];
+        for (
+          let index = 0, index2 = 0;
+          index2 < data.to.length;
+          index++, index2++
+        ) {
+          if (this.list.toJSON().join("")[index] != data.to[index2]) {
+            changes.push({
+              at: index2,
+              input: data.to[index2],
+              method: "insert",
+            });
+
+            for (let i = 1; i < data.to.length - index2; i++) {
+              if (this.list.toJSON().join("")[index] != data.to[index2 + i]) {
+                changes[changes.length - 1].input += data.to[index2 + i];
+              } else {
+                break;
+              }
+            }
+            index2 += changes[changes.length - 1].input.length;
+          }
         }
-      });
-      console.log(this.list.toJSON())
+        console.log(changes);
+        let modified = data.to;
+        for (let i2 = changes.length - 1; i2 >= 0; i2--) {
+          let start = modified.slice(0, changes[i2].at);
+          let end = modified.slice(changes[i2].at + changes[i2].input.length);
+          modified = start + end;
+          console.log(modified);
+        }
+        if (modified == this.list.toJSON().join("")) {
+          changes.forEach((el) => {
+            console.log(el);
+            for (
+              let is = 0;
+              is < el.input.length;
+              is++
+            ) {
+              console.log("huh");
+              this.list.insert(el.at + is, el.input[is]);
+            }
+          });
+          this.doc.commit();
+          changes = [];
+        }
+      }
+      // data.forEach((element) => {
+      //   if(element.method == "insert")
+      //   {
+      //     for (let index = 0; index < element.input.length; index++) {
+      //       console.log("commiting" + index)
+      //       this.list.insert(element.at + index, element.input[index]);
+      //       this.doc.commit();
+      //     }
+      //   }
+      //   else if(element.method == "deleted")
+      //   {
+      //     this.list.delete(element.at, 1)
+      //     this.doc.commit();
+      //   }
+      // });
+      console.log(this.list.toJSON());
       this.doc.export({
         mode: "shallow-snapshot",
         frontiers: this.doc.frontiers(),
