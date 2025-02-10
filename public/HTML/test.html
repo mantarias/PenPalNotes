@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ESM Module Example</title>
+  </head>
+ 
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import init, {
+        LoroDoc,
+      } from "https://cdn.jsdelivr.net/npm/loro-crdt@1.0.9/web/index.js";
+ 
+      init().then(() => {
+        const doc = new LoroDoc();
+        const text = doc.getText("text");
+      });
+    </script>
+  </body>
+</html>

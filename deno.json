@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "loro-crdt": "npm:loro-crdt@^1.3.5"
+  }
+}

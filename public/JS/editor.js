@@ -1,11 +1,9 @@
 const h1 = document.querySelector('h1');
 const iframe = document.querySelector('iframe');
 const editor = document.querySelector('#editor');
-let interval;
-let id;
-let modified = false;
-let localDada;
-let cursorPosition = 0;
+let changed = false;
+let timeout;
+let old = [];
 addEventListener('load', () => {
     let url = window.location.pathname.split('/');
     let filename = url[url.length - 1];
@@ -19,21 +17,21 @@ addEventListener('load', () => {
     });
 
     socket.addEventListener('message', (event) => {
+        console.log("got message")
         const data = JSON.parse(event.data);
-        if (id == undefined && data.id != undefined) {
-            id = data.id;
+        for (let index = 0; index <= data.list.length; index++) {
+            if (data.list[index] == old[index]) {
+                continue;
+            }
+            else {
+                editor.value = data.list[index];
+                old = data.list;
+                break;
+            }
         }
-        if (data.data != undefined) {
-            localDada = new dada(data.data);
-            console.log("updated dada");
-        }
-        console.log("Received data:", data);
 
-        // Save the cursor position
-        // Update the editor
-        editor.innerHTML = Array.from(localDada.characters.values()).map(el => el.symbol).join("").replaceAll("\n", "<div><br></div>");
-        clearInterval(interval);
-        // Restore the cursor position
+        changed = true;
+
 
     });
 
@@ -42,66 +40,19 @@ addEventListener('load', () => {
     });
 
     editor.addEventListener('input', () => {
-        clearTimeout(interval);
-        interval = setTimeout(() => {
-            const text = editor.innerHTML.replace(/<\/div>/g, "\n").replace(/<div>/g, "").replace(/<br>/g, "");
-            const compare = localDada.characters.map(el => el.symbol).join("");
-            if (text == compare) return;
-            let i = compare.length-1;
-            while (text.length < localDada.characters.length) {
-                if (text.length < localDada.characters.length) {
-                    
-                        if (text[i] != localDada.characters[i].symbol) {
-                            console.log(text[i] != localDada.characters[i].symbol, text[i], localDada.characters[i].symbol);
-                            console.log(i)
-                            localDada.characters.splice(i, 1);
-                            i--;
-                        }
-                        else {
-                            i--;
-                        }
-                    
-                }
-            }
-            for (let i = 0; i < text.length; i++) {
-                if (localDada.characters[i] == undefined || localDada.characters[i].symbol != text[i]) {
-                    localDada.characters[i] = new char(text[i], i, [id]);
+        if (changed) {
+            changed = false;
+        }
+        else {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                socket.send(JSON.stringify(editor.value));
+            }, 1000);
+        }
 
-                }
 
-            }
-            console.log(localDada.characters == text)
-            if (localDada.characters == text)
-                console.log("Sending data:", localDada);
-            socket.send(JSON.stringify(localDada));
-        }, 500);
+
+
 
     });
 });
-
-class dada {
-    characters;
-    constructor(data) {
-        this.characters = [];
-        data.characters.forEach((el, index) => {
-            this.characters[index] = new char(el, index, data.characters[index].author);
-        });
-        console.log(this.characters);
-    }
-}
-class char {
-    symbol;
-    author;
-    position;
-
-    constructor(
-        symbol,
-        position,
-        author
-    ) {
-        this.symbol = Array.isArray(symbol) ? symbol[1] : symbol;
-        this.position = position;
-        this.author = author;
-    }
-}
-
