@@ -19,10 +19,10 @@ class OpenFile {
     this.users.forEach((element) => {
       element.socket.send(JSON.stringify(this.doc));
       element.doc.import(update);
-      clearInterval(this.timeout)
+      clearInterval(this.timeout);
       this.timeout = setTimeout(() => {
         this.updateFile();
-      },1000);
+      }, 1000);
     });
   }
   updateFile() {
@@ -46,7 +46,6 @@ class User {
   }
   socketEvents(): void {
     this.socket.onopen = async () => {
-      console.log("WebSocket connection opened");
       const data = await Deno.readTextFile("./mkdocs/docs/" + this.file);
       for (let index = 0; index < data.length; index++) {
         this.list.insert(index, data[index]);
@@ -63,14 +62,13 @@ class User {
     };
     this.socket.onmessage = (event) => {
       let data = JSON.parse(event.data);
-      console.log(this.list.toJSON());
-      console.log("dp o ever get here");
       if (data.method == "deleted") {
         for (let index = data.from.length; index >= 0; index--) {
           if (data.from[index] != data.to[index]) {
             this.list.delete(index, 1);
           }
         }
+        this.doc.commit();
       } else if (data.method == "insert") {
         let changes = [];
         for (
@@ -95,29 +93,25 @@ class User {
             index2 += changes[changes.length - 1].input.length;
           }
         }
-        console.log(changes);
+
         let modified = data.to;
         for (let i2 = changes.length - 1; i2 >= 0; i2--) {
           let start = modified.slice(0, changes[i2].at);
           let end = modified.slice(changes[i2].at + changes[i2].input.length);
           modified = start + end;
-          console.log(modified);
         }
-        if (modified == this.list.toJSON().join("")) {
-          changes.forEach((el) => {
-            console.log(el);
-            for (
-              let is = 0;
-              is < el.input.length;
-              is++
-            ) {
-              console.log("huh");
-              this.list.insert(el.at + is, el.input[is]);
-            }
-          });
-          this.doc.commit();
-          changes = [];
-        }
+
+        changes.forEach((el) => {
+          for (
+            let is = 0;
+            is < el.input.length;
+            is++
+          ) {
+            this.list.insert(el.at + is, el.input[is]);
+          }
+        });
+        this.doc.commit();
+        changes = [];
       }
       // data.forEach((element) => {
       //   if(element.method == "insert")
@@ -134,11 +128,6 @@ class User {
       //     this.doc.commit();
       //   }
       // });
-      console.log(this.list.toJSON());
-      this.doc.export({
-        mode: "shallow-snapshot",
-        frontiers: this.doc.frontiers(),
-      });
     };
     this.socket.onclose = () => {
       console.log("WebSocket connection closed");

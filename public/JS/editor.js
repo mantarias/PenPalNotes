@@ -2,8 +2,8 @@ const h1 = document.querySelector('h1');
 const iframe = document.querySelector('iframe');
 const editor = document.querySelector('#editor');
 let changed = false;
-let timeout;
-let old = "";
+let interval;
+let que = [];
 let socket;
 addEventListener('load', () => {
     let url = window.location.pathname.split('/');
@@ -44,16 +44,16 @@ addEventListener('load', () => {
     editor.addEventListener('input', () => {
         if (changed) {
             changed = false;
-            
+            resetTimer();
         }
         else {
-            
-            timeout = setTimeout(() => {
-
-                send("insert")
-
-            }, 500);
+            setTimeout(() => {
+                que.push({ from: old, to: editor.value.length > 0 ? editor.value : "", method: "insert" })
+                old = editor.value
+                resetTimer();
+            }, 100);
         }
+
 
 
 
@@ -63,15 +63,32 @@ addEventListener('load', () => {
     editor.addEventListener("keydown", (event) => {
         const key = event.keyCode || event.charCode;
         if (key == 8 || key == 46) {
-            
-            timeout = setTimeout(() => {
-                send("deleted");
-            }, 500);
+            setTimeout(() => {
+                que.push({ from: old, to: editor.value.length > 0 ? editor.value : "", method: "deleted" })
+                old = editor.value
+                resetTimer();
+            }, 100);
         }
     });
 
 });
-function send(type) {
-    socket.send(JSON.stringify({ from: old, to: editor.value.length > 0 ? editor.value : "", method: type }));
-    changed = true;
+
+function resetTimer() {
+    clearTimeout(interval);
+    interval = setTimeout(() => {
+        for (let i = 0; i < que.length; i++) {
+            if (que[i].method == "insert" && que[i - 1 >= 0 ? 0 : 0].method == "deleted" && que[i - 1 >= 0 ? 0 : 0].from == que[i].from && que[i - 1 >= 0 ? 0 : 0].to == que[i].to) {
+                continue;
+            }
+            else if (que[i].method == "insert" && que[i].from == que[i].to)
+            {
+                continue;
+            }
+            console.log(que[i])
+            socket.send(JSON.stringify({ from: que[i].from, to: que[i].to, method: que[i].method }));
+            changed = true;
+        }
+        que = [];
+    }, 500);
+
 }
