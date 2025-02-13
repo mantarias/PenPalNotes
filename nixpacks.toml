@@ -1,0 +1,25 @@
+providers = ["python","deno"],
+buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1737417843'
+
+[phases.install]
+dependsOn = ['setup']
+cmds = ['python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r ./docs/requirements.txt']
+cacheDirectories = ['/root/.cache/pip']
+paths = ['/opt/venv/bin']
+
+[phases.setup]
+nixPkgs = [
+    'python3',
+    'gcc',
+    'deno'
+]
+nixLibs = [
+    'zlib',
+    'stdenv.cc.cc.lib',
+]
+nixOverlays = []
+nixpkgsArchive = 'bc8f8d1be58e8c8383e683a06e1e1e57893fff87'
+
+[start]
+cmd = 'mkdocs serve -a "0.0.0.0:3000  --watch ./docs'
+cmd = "deno run --allow-read --allow-write --allow-net .\server.ts"
