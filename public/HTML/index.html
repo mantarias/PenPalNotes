@@ -4,9 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>index</title>
+    <style>
+        .file-container {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .delete-btn {
+            margin-left: 10px;
+            color: red;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <h1>hello</h1>
+    <div id="create-file">
+        <input type="text" id="filename" placeholder="Enter filename.md">
+        <button onclick="createFile()">Create File</button>
+    </div>
     <div id="files">
         <h2>Available files</h2>
     </div>
