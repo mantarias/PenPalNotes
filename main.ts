@@ -14,6 +14,13 @@ class OpenFile {
     this.doc = new LoroDoc();
     this.users.push(user);
     this.list = this.doc.getList("list");
+    this.initFile();
+  }
+  async initFile(){
+    const data = await Deno.readTextFile("./mkdocs/docs/" + this.file);
+    for (let index = 0; index < data.length; index++) {
+      this.list.insert(index, data[index]);
+    }
   }
   notifyUsers(changes: [], user: User): void {
     let update = this.doc.export({ mode: "update" });
@@ -62,21 +69,14 @@ class User {
     this.file = file;
     this.doc = new LoroDoc();
     this.list = this.doc.getList("list");
-    this.doc.import(openFiles.get(this.file)?.doc.export({ mode: "update" }))
     this.changes = [];
     this.socketEvents();
   }
   socketEvents(): void {
     this.socket.onopen = async () => {
-      const data = await Deno.readTextFile("./mkdocs/docs/" + this.file);
-      for (let index = 0; index < data.length; index++) {
-        this.list.insert(index, data[index]);
-      }
-
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
         console.log(openFiles);
-
 
         openFiles.get(this.file)?.doc.import(update);
         openFiles.get(this.file)?.doc.commit();
@@ -87,9 +87,9 @@ class User {
       });
     };
     this.socket.onmessage = (event) => {
-      console.log(this.doc.toJSON())
+      console.log(this.doc.toJSON());
       onMessage(event.data, this);
-      console.log(this.doc.toJSON())
+      console.log(this.doc.toJSON());
     };
     this.socket.onclose = () => {
       console.log("WebSocket connection closed");
@@ -132,6 +132,7 @@ async function router(_req: Request): Promise<Response> {
     } else {
       openFiles.get(filePath)?.users.push(user);
     }
+    user.doc.import(openFiles.get(user.file)?.doc.export({ mode: "update" }));
     return response;
   } else if (url.pathname.startsWith("/notes/")) {
     try {
