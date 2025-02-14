@@ -3,7 +3,7 @@ buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1737417843'
 
 [phases.install]
 dependsOn = ['setup']
-cmds = ['python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r ./docs/requirements.txt && deno install']
+cmds = ['python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r ./mkdocs/requirements.txt && deno install']
 cacheDirectories = ['/root/.cache/pip']
 paths = ['/opt/venv/bin']
 
@@ -20,4 +20,4 @@ nixOverlays = []
 nixpkgsArchive = 'bc8f8d1be58e8c8383e683a06e1e1e57893fff87'
 
 [start]
-cmd = 'mkdocs serve -a "0.0.0.0:3000  --watch ./docs& && deno run --allow-read --allow-write --allow-net .\\main.ts&'
+cmd = 'mkdocs serve -a "0.0.0.0:3000  --watch ./docs& && deno run --allow-read --allow-write --allow-net ./main.ts&'
