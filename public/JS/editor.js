@@ -33,7 +33,7 @@ addEventListener('load', () => {
         old = data.list.join("");
         editor.value = old;
         changed = true;
-
+        iframe.contentWindow.location.reload();
 
     });
 
