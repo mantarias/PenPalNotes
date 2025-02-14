@@ -19,7 +19,7 @@ class OpenFile {
     for (let i = 0; i < this.users.length; i++) {
       const element = this.users[i];
       element.doc.import(update);
-      console.log(element.doc.toJSON())
+      console.log(element.doc.toJSON());
       if (element == user) {
         element.socket.send(JSON.stringify({ doc: this.doc, changes: [] }));
         continue;
@@ -74,7 +74,6 @@ class User {
         openFiles.get(this.file)?.doc.import(update);
         openFiles.get(this.file)?.doc.commit();
         openFiles.get(this.file)?.notifyUsers(this.changes, this);
-        
       });
       openFiles.get(this.file)?.doc.subscribeLocalUpdates((update) => {
         this.doc.import(update);
@@ -185,15 +184,23 @@ function getFileType(path: string, user: User): string {
 function onMessage(event: string, user: User) {
   let data = JSON.parse(event);
   user.changes = data;
+  console.log(data);
   for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
     let index = 0;
-    console.log(data[outerIndex].ops)
+    console.log(data[outerIndex].ops);
     data[outerIndex].ops.forEach((el) => {
       if (el.retain != undefined) {
         index = el.retain;
+        console.log("updated index to " + index);
       } else if (el.insert != undefined) {
-        user.list.insert(index, el.insert);
+        console.log("inserted");
+        for(let i = 0; i < el.insert.length; i++)
+        {
+          user.list.insert(index, el.insert[i]);
+        }
+        
       } else if (el.delete != undefined) {
+        console.log("deleted");
         user.list.delete(index, el.delete);
       }
     });

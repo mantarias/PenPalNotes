@@ -65,7 +65,7 @@ addEventListener('load', () => {
             // quill.setSelection(position);
         } else if (source == 'user') {
             // que.push({ old: oldDelta, to: dque.push({old : oldDelta, to : delta});elta });
-
+            console.log(oldDelta)
             que.push(delta);
             console.log(delta);
             resetTimer();
