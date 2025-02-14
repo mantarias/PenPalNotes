@@ -36,6 +36,9 @@ class OpenFile {
       stdout: "inherit",
       stderr: "inherit",
     }).output();
+    this.users.forEach((element) => {
+      element.socket.send(JSON.stringify({ message: "file updated" }));
+    });
   }
 }
 class User {
@@ -187,7 +190,7 @@ async function router(_req: Request): Promise<Response> {
         filePath.replace("/index/index.html", "/index.html"),
       );
       return new Response(file, {
-        headers: { "Content-Type": getFileType(filePath)  },
+        headers: { "Content-Type": getFileType(filePath) },
       });
     } catch (error) {
       return new Response("File not found", { status: 404 });
@@ -196,13 +199,13 @@ async function router(_req: Request): Promise<Response> {
     url.pathname.includes("/assets/") || url.pathname.includes("/search/")
   ) {
     try {
-      let filePath = "./mkdocs/site" + url.pathname.replace("/notes/","");
+      let filePath = "./mkdocs/site" + url.pathname.replace("/notes/", "");
       const file = await Deno.readFile(
         filePath.replace("/index/index.html", "/index.html"),
       );
 
       return new Response(file, {
-        headers: { "Content-Type": getFileType(filePath)  },
+        headers: { "Content-Type": getFileType(filePath) },
       });
     } catch (error) {
       return new Response("File not found", { status: 404 });

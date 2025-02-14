@@ -30,10 +30,13 @@ addEventListener('load', () => {
         //         break;
         //     }
         // }
+        if (data.message != undefined && data.message == "file updated") {
+            iframe.contentWindow.location.reload();
+            return;
+        }
         old = data.list.join("");
         editor.value = old;
         changed = true;
-        iframe.contentWindow.location.reload();
 
     });
 
@@ -80,8 +83,7 @@ function resetTimer() {
             if (que[i].method == "insert" && que[i - 1 >= 0 ? 0 : 0].method == "deleted" && que[i - 1 >= 0 ? 0 : 0].from == que[i].from && que[i - 1 >= 0 ? 0 : 0].to == que[i].to) {
                 continue;
             }
-            else if (que[i].method == "insert" && que[i].from == que[i].to)
-            {
+            else if (que[i].method == "insert" && que[i].from == que[i].to) {
                 continue;
             }
             console.log(que[i])
