@@ -1,6 +1,7 @@
 import { Loro, LoroDoc, LoroList, LoroMap, LoroText } from "npm:loro-crdt";
 let openFiles: Map<string, OpenFile>;
 openFiles = new Map();
+
 class OpenFile {
   file: string;
   list;
@@ -18,12 +19,12 @@ class OpenFile {
     let update = this.doc.export({ mode: "update" });
     for (let i = 0; i < this.users.length; i++) {
       const element = this.users[i];
-      element.doc.import(update);
-      console.log(element.doc.toJSON());
+
       if (element == user) {
         element.socket.send(JSON.stringify({ doc: this.doc, changes: [] }));
         continue;
       }
+      element.doc.import(update);
       element.socket.send(JSON.stringify({ doc: this.doc, changes: changes }));
     }
     user.changes = [];
@@ -49,6 +50,7 @@ class OpenFile {
     });
   }
 }
+
 class User {
   socket: WebSocket;
   file: string;
@@ -60,6 +62,7 @@ class User {
     this.file = file;
     this.doc = new LoroDoc();
     this.list = this.doc.getList("list");
+    this.doc.import(openFiles.get(this.file)?.doc.export({ mode: "update" }))
     this.changes = [];
     this.socketEvents();
   }
@@ -72,6 +75,9 @@ class User {
 
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
+        console.log(openFiles);
+
+
         openFiles.get(this.file)?.doc.import(update);
         openFiles.get(this.file)?.doc.commit();
         openFiles.get(this.file)?.notifyUsers(this.changes, this);
@@ -81,7 +87,9 @@ class User {
       });
     };
     this.socket.onmessage = (event) => {
+      console.log(this.doc.toJSON())
       onMessage(event.data, this);
+      console.log(this.doc.toJSON())
     };
     this.socket.onclose = () => {
       console.log("WebSocket connection closed");
@@ -185,18 +193,13 @@ function getFileType(path: string, user: User): string {
 function onMessage(event: string, user: User) {
   let data = JSON.parse(event);
   user.changes = data;
-  console.log(data);
   for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
     let index = 0;
-    console.log(data[outerIndex].ops);
-
     for (let myIndex = 0; myIndex < data[outerIndex].ops.length; myIndex++) {
       const el = data[outerIndex].ops[myIndex];
       if (el.retain != undefined) {
         index = el.retain;
-        console.log("updated index to " + index);
       } else if (el.insert != undefined) {
-        console.log("inserted");
         for (let i = el.insert.length - 1; i >= 0; i--) {
           user.list.insert(index, el.insert[i]);
         }
@@ -205,7 +208,6 @@ function onMessage(event: string, user: User) {
         user.list.delete(index, el.delete);
       }
     }
-    user.doc.commit();
   }
   user.doc.commit();
 }
