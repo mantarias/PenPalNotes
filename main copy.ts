@@ -14,23 +14,16 @@ class OpenFile {
     this.users.push(user);
     this.list = this.doc.getList("list");
   }
-  notifyUsers(changes: [], user: User): void {
+  notifyUsers(): void {
     let update = this.doc.export({ mode: "update" });
-    for (let i = 0; i < this.users.length; i++) {
-      const element = this.users[i];
+    this.users.forEach((element) => {
+      element.socket.send(JSON.stringify(this.doc));
       element.doc.import(update);
-      console.log(element.doc.toJSON())
-      if (element == user) {
-        element.socket.send(JSON.stringify({ doc: this.doc, changes: [] }));
-        continue;
-      }
-      element.socket.send(JSON.stringify({ doc: this.doc, changes: changes }));
-    }
-
-    clearInterval(this.timeout);
-    this.timeout = setTimeout(() => {
-      this.updateFile();
-    }, 1000);
+      clearInterval(this.timeout);
+      this.timeout = setTimeout(() => {
+        this.updateFile();
+      }, 1000);
+    });
   }
   async updateFile() {
     Deno.writeTextFile(
@@ -53,13 +46,11 @@ class User {
   file: string;
   list;
   doc;
-  changes: [];
   constructor(socket: WebSocket, file: string) {
     this.socket = socket;
     this.file = file;
     this.doc = new LoroDoc();
     this.list = this.doc.getList("list");
-    this.changes = [];
     this.socketEvents();
   }
   socketEvents(): void {
@@ -72,8 +63,7 @@ class User {
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
         openFiles.get(this.file)?.doc.import(update);
-        openFiles.get(this.file)?.notifyUsers(this.changes, this);
-        
+        openFiles.get(this.file)?.notifyUsers();
       });
       openFiles.get(this.file)?.doc.subscribeLocalUpdates((update) => {
         this.doc.import(update);
@@ -82,6 +72,21 @@ class User {
     this.socket.onmessage = (event) => {
       onMessage(event.data, this);
     };
+    // data.forEach((element) => {
+    //   if(element.method == "insert")
+    //   {
+    //     for (let index = 0; index < element.input.length; index++) {
+    //       console.log("commiting" + index)
+    //       this.list.insert(element.at + index, element.input[index]);
+    //       this.doc.commit();
+    //     }
+    //   }
+    //   else if(element.method == "deleted")
+    //   {
+    //     this.list.delete(element.at, 1)
+    //     this.doc.commit();
+    //   }
+    // });
     this.socket.onclose = () => {
       console.log("WebSocket connection closed");
       let test = openFiles.get(this.file)?.users.indexOf(this);
@@ -183,19 +188,70 @@ function getFileType(path: string, user: User): string {
 }
 function onMessage(event: string, user: User) {
   let data = JSON.parse(event);
-  user.changes = data;
-  for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
-    let index = 0;
-    console.log(data[outerIndex].ops)
-    data[outerIndex].ops.forEach((el) => {
-      if (el.retain != undefined) {
-        index = el.retain;
-      } else if (el.insert != undefined) {
-        user.list.insert(index, el.insert);
-      } else if (el.delete != undefined) {
-        user.list.delete(index, el.delete);
-      }
-    });
-  }
-  user.doc.commit();
+  console.log(data);
+  // for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
+
+  //   if(data[outerIndex].method == "insert" && data[outerIndex - 1 >= 0 ? 0 : 0].method == "deleted" && data[outerIndex - 1 >= 0 ? 0 : 0].from == data[outerIndex].from && data[outerIndex - 1 >= 0 ? 0 : 0].to == data[outerIndex].to)
+  //   {
+  //     continue
+  //   }
+  //   if(data[outerIndex].method == "insert" && data[outerIndex].from == data[outerIndex].to){
+  //     continue;
+  //   }
+  //   const el = data[outerIndex];
+
+  //   console.log(el);
+  //   if (el.method == "deleted") {
+  //     for (let index = el.from.length; index >= 0; index--) {
+  //       if (el.from[index] != el.to[index]) {
+  //         user.list.delete(index, 1);
+  //       }
+  //     }
+  //     user.doc.commit();
+  //   } else if (el.method == "insert") {
+  //     let changes = [];
+  //     for (
+  //       let index = 0, index2 = 0;
+  //       index2 < el.to.length;
+  //       index++, index2++
+  //     ) {
+  //       if (user.list.toJSON().join("")[index] != el.to[index2]) {
+  //         changes.push({
+  //           at: index2,
+  //           input: el.to[index2],
+  //           method: "insert",
+  //         });
+
+  //         for (let i = 1; i < el.to.length - index2; i++) {
+  //           if (user.list.toJSON().join("")[index] != el.to[index2 + i]) {
+  //             changes[changes.length - 1].input += el.to[index2 + i];
+  //           } else {
+  //             break;
+  //           }
+  //         }
+  //         index2 += changes[changes.length - 1].input.length;
+  //       }
+  //     }
+
+  //     let modified = el.to;
+  //     for (let i2 = changes.length - 1; i2 >= 0; i2--) {
+  //       let start = modified.slice(0, changes[i2].at);
+  //       let end = modified.slice(changes[i2].at + changes[i2].input.length);
+  //       modified = start + end;
+  //     }
+
+  //     changes.forEach((el) => {
+  //       for (
+  //         let is = 0;
+  //         is < el.input.length;
+  //         is++
+  //       ) {
+  //         user.list.insert(el.at + is, el.input[is]);
+  //       }
+  //     });
+  //     changes = [];
+  //   }
+  // }
+  // console.log("done with modifications");
+  // user.doc.commit();
 }
