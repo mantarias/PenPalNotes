@@ -30,6 +30,12 @@ class OpenFile {
       "./mkdocs/docs/" + this.file,
       this.doc.toJSON().list.join(""),
     );
+    new Deno.Command("mkdocs", {
+      args: ["build"],
+      cwd: "./mkdocs",
+      stdout: "inherit",
+      stderr: "inherit",
+    }).output();
   }
 }
 class User {
@@ -171,6 +177,27 @@ async function router(_req: Request): Promise<Response> {
       openFiles.get(filePath)?.users.push(user);
     }
     return response;
+  } else if (url.pathname.startsWith("/notes/")) {
+    try {
+      const filePath = "./mkdocs/site" + url.pathname;
+      const file = await Deno.readFile(filePath);
+      const contentType = {
+        ".html": "text/html",
+        ".css": "text/css",
+        ".js": "application/javascript",
+        ".json": "application/json",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".gif": "image/gif",
+      }[filePath.substring(filePath.lastIndexOf("."))] ||
+        "application/octet-stream";
+
+      return new Response(file, {
+        headers: { "Content-Type": contentType },
+      });
+    } catch (error) {
+      return new Response("File not found", { status: 404 });
+    }
   } else {
     try {
       const filePath = "./public/" + url.pathname;
