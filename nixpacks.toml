@@ -1,4 +1,4 @@
-providers = ["python","deno"]
+providers = ["python"]
 buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1737417843'
 
 [phases.install]
@@ -11,6 +11,7 @@ paths = ['/opt/venv/bin']
 nixPkgs = [
     'python3',
     'gcc',
+    'deno'.
 ]
 nixLibs = [
     'zlib',
