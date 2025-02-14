@@ -9,7 +9,7 @@ addEventListener('load', () => {
     let url = window.location.pathname.split('/');
     let filename = url[url.length - 1];
     h1.textContent = "Editing " + filename;
-    iframe.src = "/notes/" + filename.replace(".md", "");
+    iframe.src = "/notes/" + filename;
     // Connect to WebSocket server
     socket = new WebSocket("/ws/" + filename);
 

@@ -179,8 +179,25 @@ async function router(_req: Request): Promise<Response> {
     return response;
   } else if (url.pathname.startsWith("/notes/")) {
     try {
-      const filePath = "./mkdocs/site" + url.pathname.replace("/notes/","");
-      const file = await Deno.readFile(filePath +"/index.html");
+      let filePath = "./mkdocs/site/" + url.pathname.replace("/notes/", "") +
+        (url.pathname.endsWith(".md") ? "/index.html" : "");
+      filePath = filePath.replace(".md", "");
+
+      const file = await Deno.readFile(
+        filePath.replace("/index/index.html", "/index.html"),
+      );
+      return new Response(file, {
+        headers: { "Content-Type": "text/html" },
+      });
+    } catch (error) {
+      return new Response("File not found", { status: 404 });
+    }
+  } else if (url.pathname.startsWith("/assets/") ||url.pathname.startsWith("/search/")) {
+    try {
+      let filePath = "./mkdocs/site" + url.pathname;
+      const file = await Deno.readFile(
+        filePath.replace("/index/index.html", "/index.html"),
+      );
       const contentType = {
         ".html": "text/html",
         ".css": "text/css",
