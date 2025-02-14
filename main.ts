@@ -185,7 +185,7 @@ function onMessage(event: string, user: User) {
   let data = JSON.parse(event);
   user.changes = data;
   console.log(data);
-  for (let outerIndex = 0; outerIndex < data.length; outerIndex-- {
+  for (let outerIndex = 0; outerIndex < data.length; outerIndex-- ){
     let index = 0;
     console.log(data[outerIndex].ops);
     data[outerIndex].ops.forEach((el) => {
