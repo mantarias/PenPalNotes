@@ -179,8 +179,8 @@ async function router(_req: Request): Promise<Response> {
     return response;
   } else if (url.pathname.startsWith("/notes/")) {
     try {
-      const filePath = "./mkdocs/site" + url.pathname;
-      const file = await Deno.readFile(filePath);
+      const filePath = "./mkdocs/site" + url.pathname.replace("/notes/","");
+      const file = await Deno.readFile(filePath +"/index.html");
       const contentType = {
         ".html": "text/html",
         ".css": "text/css",
