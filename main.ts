@@ -129,7 +129,9 @@ async function router(_req: Request): Promise<Response> {
     return response;
   } else if (url.pathname.startsWith("/notes/")) {
     try {
-      let filePath = "./mkdocs/site/" + url.pathname.replace("/notes/", "") +
+      let filePath =
+        "./mkdocs/site/" +
+        url.pathname.replace("/notes/", "") +
         (url.pathname.endsWith(".md") ? "/index.html" : "");
       filePath = filePath.replace(".md", "");
 
@@ -143,7 +145,8 @@ async function router(_req: Request): Promise<Response> {
       return new Response("File not found", { status: 404 });
     }
   } else if (
-    url.pathname.includes("/assets/") || url.pathname.includes("/search/")
+    url.pathname.includes("/assets/") ||
+    url.pathname.includes("/search/")
   ) {
     try {
       let filePath = "./mkdocs/site" + url.pathname.replace("/notes/", "");
@@ -157,7 +160,61 @@ async function router(_req: Request): Promise<Response> {
     } catch (error) {
       return new Response("File not found", { status: 404 });
     }
-  } else {
+    
+  } 
+  
+  // Add these handlers to your router function
+  else if (url.pathname == "/createFile") {
+      if (_req.method !== 'POST') {
+          return new Response('Method not allowed', { status: 405 });
+      }
+  
+      const body = await _req.json();
+      const filename = body.filename;
+  
+      try {
+          await Deno.writeTextFile(`./mkdocs/docs/${filename}`, '');
+          await new Deno.Command("mkdocs", {
+              args: ["build"],
+              cwd: "./mkdocs",
+              stdout: "inherit",
+              stderr: "inherit",
+          }).output();
+          return new Response(JSON.stringify({ success: true }));
+      } catch (error) {
+          return new Response(JSON.stringify({ 
+              success: false, 
+              message: error.message 
+          }));
+      }
+  }
+  else if (url.pathname == "/deleteFile") {
+      if (_req.method !== 'POST') {
+          return new Response('Method not allowed', { status: 405 });
+      }
+  
+      const body = await _req.json();
+      const filename = body.filename;
+  
+      try {
+          await Deno.remove(`./mkdocs/docs/${filename}`);
+          await new Deno.Command("mkdocs", {
+              args: ["build"],
+              cwd: "./mkdocs",
+              stdout: "inherit",
+              stderr: "inherit",
+          }).output();
+          return new Response(JSON.stringify({ success: true }));
+      } catch (error) {
+          return new Response(JSON.stringify({ 
+              success: false, 
+              message: error.message 
+          }));
+      }
+  }
+
+  
+  else {
     try {
       const filePath = "./public/" + url.pathname;
       const file = await Deno.readFile(filePath);
@@ -173,16 +230,17 @@ async function router(_req: Request): Promise<Response> {
 Deno.serve({ port: 3001 }, router);
 
 function getFileType(path: string, user: User): string {
-  return {
-    ".html": "text/html",
-    ".css": "text/css",
-    ".js": "application/javascript",
-    ".json": "application/json",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".gif": "image/gif",
-  }[path.substring(path.lastIndexOf("."))] ||
-    "application/octet-stream";
+  return (
+    {
+      ".html": "text/html",
+      ".css": "text/css",
+      ".js": "application/javascript",
+      ".json": "application/json",
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".gif": "image/gif",
+    }[path.substring(path.lastIndexOf("."))] || "application/octet-stream"
+  );
 }
 function onMessage(event: string, user: User) {
   let data = JSON.parse(event);
