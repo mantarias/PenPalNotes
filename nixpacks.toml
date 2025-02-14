@@ -11,7 +11,7 @@ paths = ['/opt/venv/bin']
 nixPkgs = [
     'python3',
     'gcc',
-    'deno'.
+    'deno',
 ]
 nixLibs = [
     'zlib',
