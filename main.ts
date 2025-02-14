@@ -194,7 +194,7 @@ function onMessage(event: string, user: User) {
         console.log("updated index to " + index);
       } else if (el.insert != undefined) {
         console.log("inserted");
-        for(let i = 0; i < el.insert.length; i++)
+        for(let i = el.insert.length-1; i >= 0; i++)
         {
           user.list.insert(index, el.insert[i]);
         }
