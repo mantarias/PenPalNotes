@@ -189,8 +189,8 @@ function onMessage(event: string, user: User) {
     let index = 0;
     console.log(data[outerIndex].ops);
 
-    for (let index = data[outerIndex].ops.length - 1; index >= 0; index--) {
-      const el = data[outerIndex].ops[index]
+    for (let myIndex = data[outerIndex].ops.length - 1; myIndex >= 0; myIndex--) {
+      const el = data[outerIndex].ops[myIndex]
       if (el.retain != undefined) {
         index = el.retain;
         console.log("updated index to " + index);
