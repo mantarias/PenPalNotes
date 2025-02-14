@@ -26,6 +26,7 @@ class OpenFile {
       }
       element.socket.send(JSON.stringify({ doc: this.doc, changes: changes }));
     }
+    user.changes = [];
 
     clearInterval(this.timeout);
     this.timeout = setTimeout(() => {
@@ -202,9 +203,9 @@ function onMessage(event: string, user: User) {
       } else if (el.delete != undefined) {
         console.log("deleted");
         user.list.delete(index, el.delete);
-        user.doc.commit();
       }
     }
+    user.doc.commit();
   }
   user.doc.commit();
 }
