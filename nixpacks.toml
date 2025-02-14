@@ -21,4 +21,4 @@ nixOverlays = []
 nixpkgsArchive = 'bc8f8d1be58e8c8383e683a06e1e1e57893fff87'
 
 [start]
-cmd = 'cd mkdocs && mkdocs build && cd .. && deno run --allow-read --allow-write --allow-net ./main.ts'
+cmd = 'cd mkdocs && mkdocs build && cd .. && deno run --allow-read --allow-write --allow-all --allow-net ./main.ts'
