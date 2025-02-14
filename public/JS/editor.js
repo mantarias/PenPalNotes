@@ -9,9 +9,9 @@ addEventListener('load', () => {
     let url = window.location.pathname.split('/');
     let filename = url[url.length - 1];
     h1.textContent = "Editing " + filename;
-    iframe.src = "/notes/" + filename.replace(".md", "");
+    iframe.src = window.location.hostname + "/notes/" + filename.replace(".md", "");
     // Connect to WebSocket server
-    socket = new WebSocket("/ws/" + filename);
+    socket = new WebSocket(window.location.hostname + "/ws/" + filename);
 
     socket.addEventListener('open', () => {
         console.log("WebSocket connection opened");
