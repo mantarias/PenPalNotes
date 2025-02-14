@@ -1,4 +1,4 @@
-providers = ["python","deno"],
+providers = ["python","deno"]
 buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1737417843'
 
 [phases.install]
