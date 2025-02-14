@@ -193,10 +193,10 @@ async function router(_req: Request): Promise<Response> {
       return new Response("File not found", { status: 404 });
     }
   } else if (
-    url.pathname.startsWith("/assets/") || url.pathname.startsWith("/search/")
+    url.pathname.includes("/assets/") || url.pathname.includes("/search/")
   ) {
     try {
-      let filePath = "./mkdocs/site" + url.pathname;
+      let filePath = "./mkdocs/site" + url.pathname.replace("/notes/","");
       const file = await Deno.readFile(
         filePath.replace("/index/index.html", "/index.html"),
       );
