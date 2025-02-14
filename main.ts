@@ -72,6 +72,7 @@ class User {
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
         openFiles.get(this.file)?.doc.import(update);
+        openFiles.get(this.file)?.doc.commit();
         openFiles.get(this.file)?.notifyUsers(this.changes, this);
         
       });
