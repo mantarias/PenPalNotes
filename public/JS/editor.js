@@ -65,16 +65,15 @@ addEventListener('load', () => {
             // quill.setSelection(position);
         } else if (source == 'user') {
             // que.push({ old: oldDelta, to: dque.push({old : oldDelta, to : delta});elta });
-            console.log(oldDelta)
             que.push(delta);
-            console.log(delta);
             resetTimer();
         }
     });
 
-
-
-
+    quill.root.addEventListener("paste",(e)=>{
+        console.log(que[que.length-1])
+        que[que.length-1].ops = que[que.length-1].ops.reverse();
+    })
 
 
     // editor.addEventListener("keydown", (event) => {
