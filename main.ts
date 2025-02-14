@@ -25,12 +25,12 @@ class OpenFile {
       }, 1000);
     });
   }
-  updateFile() {
+  async updateFile() {
     Deno.writeTextFile(
       "./mkdocs/docs/" + this.file,
       this.doc.toJSON().list.join(""),
     );
-    new Deno.Command("mkdocs", {
+    await new Deno.Command("mkdocs", {
       args: ["build"],
       cwd: "./mkdocs",
       stdout: "inherit",
