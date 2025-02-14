@@ -187,30 +187,22 @@ async function router(_req: Request): Promise<Response> {
         filePath.replace("/index/index.html", "/index.html"),
       );
       return new Response(file, {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": getFileType(filePath)  },
       });
     } catch (error) {
       return new Response("File not found", { status: 404 });
     }
-  } else if (url.pathname.startsWith("/assets/") ||url.pathname.startsWith("/search/")) {
+  } else if (
+    url.pathname.startsWith("/assets/") || url.pathname.startsWith("/search/")
+  ) {
     try {
       let filePath = "./mkdocs/site" + url.pathname;
       const file = await Deno.readFile(
         filePath.replace("/index/index.html", "/index.html"),
       );
-      const contentType = {
-        ".html": "text/html",
-        ".css": "text/css",
-        ".js": "application/javascript",
-        ".json": "application/json",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".gif": "image/gif",
-      }[filePath.substring(filePath.lastIndexOf("."))] ||
-        "application/octet-stream";
 
       return new Response(file, {
-        headers: { "Content-Type": contentType },
+        headers: { "Content-Type": getFileType(filePath)  },
       });
     } catch (error) {
       return new Response("File not found", { status: 404 });
@@ -219,19 +211,9 @@ async function router(_req: Request): Promise<Response> {
     try {
       const filePath = "./public/" + url.pathname;
       const file = await Deno.readFile(filePath);
-      const contentType = {
-        ".html": "text/html",
-        ".css": "text/css",
-        ".js": "application/javascript",
-        ".json": "application/json",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".gif": "image/gif",
-      }[filePath.substring(filePath.lastIndexOf("."))] ||
-        "application/octet-stream";
 
       return new Response(file, {
-        headers: { "Content-Type": contentType },
+        headers: { "Content-Type": getFileType(filePath) },
       });
     } catch (error) {
       return new Response("File not found", { status: 404 });
@@ -239,3 +221,16 @@ async function router(_req: Request): Promise<Response> {
   }
 }
 Deno.serve({ port: 3001 }, router);
+
+function getFileType(path: string) {
+  return {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".gif": "image/gif",
+  }[path.substring(path.lastIndexOf("."))] ||
+    "application/octet-stream";
+}
