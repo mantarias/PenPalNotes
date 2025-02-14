@@ -43,8 +43,6 @@ addEventListener('load', () => {
 
                 quill.updateContents(change);
             }
-
-            que = [];
             console.log(que)
         }
         else {

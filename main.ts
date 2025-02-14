@@ -16,7 +16,7 @@ class OpenFile {
     this.list = this.doc.getList("list");
     this.initFile();
   }
-  async initFile(){
+  async initFile() {
     const data = await Deno.readTextFile("./mkdocs/docs/" + this.file);
     for (let index = 0; index < data.length; index++) {
       this.list.insert(index, data[index]);
@@ -36,10 +36,7 @@ class OpenFile {
     }
     user.changes = [];
 
-    clearInterval(this.timeout);
-    this.timeout = setTimeout(() => {
-      this.updateFile();
-    }, 1000);
+    this.updateFile();
   }
   async updateFile() {
     Deno.writeTextFile(
@@ -76,8 +73,6 @@ class User {
     this.socket.onopen = async () => {
       this.socket.send(JSON.stringify(this.doc));
       this.doc.subscribeLocalUpdates((update) => {
-        console.log(openFiles);
-
         openFiles.get(this.file)?.doc.import(update);
         openFiles.get(this.file)?.doc.commit();
         openFiles.get(this.file)?.notifyUsers(this.changes, this);
@@ -87,9 +82,7 @@ class User {
       });
     };
     this.socket.onmessage = (event) => {
-      console.log(this.doc.toJSON());
       onMessage(event.data, this);
-      console.log(this.doc.toJSON());
     };
     this.socket.onclose = () => {
       console.log("WebSocket connection closed");
@@ -194,18 +187,20 @@ function getFileType(path: string, user: User): string {
 function onMessage(event: string, user: User) {
   let data = JSON.parse(event);
   user.changes = data;
+  console.log(data);
   for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
     let index = 0;
     for (let myIndex = 0; myIndex < data[outerIndex].ops.length; myIndex++) {
       const el = data[outerIndex].ops[myIndex];
+      console.log(el);
       if (el.retain != undefined) {
+
         index = el.retain;
       } else if (el.insert != undefined) {
         for (let i = el.insert.length - 1; i >= 0; i--) {
           user.list.insert(index, el.insert[i]);
         }
       } else if (el.delete != undefined) {
-        console.log("deleted");
         user.list.delete(index, el.delete);
       }
     }
