@@ -198,12 +198,10 @@ function onMessage(event: string, user: User) {
         console.log("inserted");
         for (let i = el.insert.length - 1; i >= 0; i--) {
           user.list.insert(index, el.insert[i]);
-          user.doc.commit();
         }
       } else if (el.delete != undefined) {
         console.log("deleted");
         user.list.delete(index, el.delete);
-        user.doc.commit();
       }
     }
   }
