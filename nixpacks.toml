@@ -22,4 +22,4 @@ nixpkgsArchive = 'bc8f8d1be58e8c8383e683a06e1e1e57893fff87'
 
 [start]
 cmd = 'mkdocs serve -a "0.0.0.0:3000  --watch ./docs'
-cmd = "deno run --allow-read --allow-write --allow-net .\server.ts"
+cmd = "deno run --allow-read --allow-write --allow-net .\\server.ts"
