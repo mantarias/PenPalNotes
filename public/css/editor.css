@@ -1,25 +1,36 @@
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-#container{
+
+#container {
     display: flex;
     width: 100vw;
     height: 100vh;
-    background-color: red;
 }
-#container #editor{
+
+#container > div {
     width: 50vw;
     height: 100vh;
-    background-color: #31302e;
-    color: white;
 }
-#container iframe{
+
+#container iframe {
     width: 50vw;
     height: 100vh;
-    background-color: green;
+    border: none;
+    background-color: #fff;
 }
-#container .ql-toolbar{
-    background-color: white;
+
+.EasyMDEContainer {
+    height: 100%;
+}
+
+.CodeMirror {
+    height: 100% !important;
+}
+
+.editor-toolbar {
+    border: none;
+    background-color: #f5f5f5;
 }

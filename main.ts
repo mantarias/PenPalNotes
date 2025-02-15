@@ -39,19 +39,24 @@ class OpenFile {
     this.updateFile();
   }
   async updateFile() {
-    Deno.writeTextFile(
-      "./mkdocs/docs/" + this.file,
-      this.doc.toJSON().list.join(""),
-    );
-    await new Deno.Command("mkdocs", {
-      args: ["build"],
-      cwd: "./mkdocs",
-      stdout: "inherit",
-      stderr: "inherit",
-    }).output();
-    this.users.forEach((element) => {
-      element.socket.send(JSON.stringify({ message: "file updated" }));
-    });
+      try {
+          const content = this.doc.toJSON().list.join("");
+          await Deno.writeTextFile(
+              "./mkdocs/docs/" + this.file,
+              content
+          );
+          await new Deno.Command("mkdocs", {
+              args: ["build"],
+              cwd: "./mkdocs",
+              stdout: "inherit",
+              stderr: "inherit",
+          }).output();
+          this.users.forEach((element) => {
+              element.socket.send(JSON.stringify({ message: "file updated" }));
+          });
+      } catch (error) {
+          console.error("Error updating file:", error);
+      }
   }
 }
 
@@ -243,25 +248,44 @@ function getFileType(path: string, user: User): string {
   );
 }
 function onMessage(event: string, user: User) {
-  let data = JSON.parse(event);
-  user.changes = data;
-  console.log(data);
-  for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
-    let index = 0;
-    for (let myIndex = 0; myIndex < data[outerIndex].ops.length; myIndex++) {
-      const el = data[outerIndex].ops[myIndex];
-      console.log(el);
-      if (el.retain != undefined) {
+    let data = JSON.parse(event);
 
-        index = el.retain;
-      } else if (el.insert != undefined) {
-        for (let i = el.insert.length - 1; i >= 0; i--) {
-          user.list.insert(index, el.insert[i]);
+    // If the data contains content (from EasyMDE)
+    if (data.content !== undefined) {
+        // Clear the existing list
+        while (user.list.length > 0) {
+            user.list.delete(0, 1);
         }
-      } else if (el.delete != undefined) {
-        user.list.delete(index, el.delete);
-      }
+
+        // Insert new content character by character
+        for (let i = 0; i < data.content.length; i++) {
+            user.list.insert(i, data.content[i]);
+        }
+
+        user.doc.commit();
+
+        // Trigger file update
+        openFiles.get(user.file)?.updateFile();
+    } 
+    // Handle the old delta-based changes
+    else if (Array.isArray(data)) {
+        user.changes = data;
+        for (let outerIndex = 0; outerIndex < data.length; outerIndex++) {
+            let index = 0;
+            for (let myIndex = 0; myIndex < data[outerIndex].ops.length; myIndex++) {
+                const el = data[outerIndex].ops[myIndex];
+                if (el.retain != undefined) {
+                    index = el.retain;
+                } else if (el.insert != undefined) {
+                    for (let i = el.insert.length - 1; i >= 0; i--) {
+                        user.list.insert(index, el.insert[i]);
+                    }
+                } else if (el.delete != undefined) {
+                    user.list.delete(index, el.delete);
+                }
+            }
+            user.doc.commit();
+        }
+        user.doc.commit();
     }
-  }
-  user.doc.commit();
 }

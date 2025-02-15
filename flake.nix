@@ -55,6 +55,10 @@
               pkgs.zlib
               pkgs.stdenv.cc.cc.lib
             ]}"
+            cd mkdocs
+            mkdocs build
+            cd ..
+            deno run --allow-all --watch ./main.ts
           '';
         };
       });
