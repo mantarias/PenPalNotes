@@ -71,7 +71,7 @@ class User {
   }
   socketEvents(): void {
     this.socket.onopen = async () => {
-      this.socket.send(JSON.stringify(this.doc));
+      this.socket.send(JSON.stringify({doc:this.doc}));
       this.doc.subscribeLocalUpdates((update) => {
         openFiles.get(this.file)?.doc.import(update);
         openFiles.get(this.file)?.doc.commit();

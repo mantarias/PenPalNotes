@@ -5,6 +5,7 @@ let interval;
 let que = [];
 let socket;
 let quill
+let old = "";
 addEventListener('load', () => {
     quill = new Quill('#editor', {
         theme: 'snow'
@@ -36,8 +37,8 @@ addEventListener('load', () => {
             return;
         }
         editor.focus();
-        console.log(data);
-        if (data.changes != undefined) {
+        console.log(data)
+        if (data.changes != undefined && data.changes.length != 0) {
             for (let index = 0; index < data.changes.length; index++) {
                 const change = data.changes[index];
 
@@ -46,9 +47,11 @@ addEventListener('load', () => {
             console.log(que)
         }
         else {
-            old = data.list.join("");
-            quill.setContents([{ insert: old }]);
             que = [];
+            if (old == "") {
+                old = data.doc.list.join("");
+                quill.setContents([{ insert: old }]);
+            }
         }
 
 
@@ -60,7 +63,21 @@ addEventListener('load', () => {
 
     quill.on('text-change', (delta, oldDelta, source) => {
         if (source == 'api') {
-            // quill.setSelection(position);
+            if (que.length != 0) {
+
+                for (let i = que.length - 1, index = que[que.length - 1].ops.retain; i >= 0; i--) {
+                    if (que[i].ops[0].retain != undefined) {
+                        if (que[i].ops[0].retain - index > 1) {
+                            que[i].ops[0].retain == que[i].ops[0].retain - que[i].ops[0].retain - index + 1;
+
+                        }
+                        index = que[i].ops[0].retain;
+                    }
+
+
+
+                }
+            }
         } else if (source == 'user') {
             // que.push({ old: oldDelta, to: dque.push({old : oldDelta, to : delta});elta });
             que.push(delta);
@@ -68,9 +85,9 @@ addEventListener('load', () => {
         }
     });
 
-    quill.root.addEventListener("paste",(e)=>{
-        console.log(que[que.length-1])
-        que[que.length-1].ops = que[que.length-1].ops.reverse();
+    quill.root.addEventListener("paste", (e) => {
+        console.log(que[que.length - 1])
+        que[que.length - 1].ops = que[que.length - 1].ops.reverse();
     })
 
 
